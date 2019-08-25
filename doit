@@ -1,0 +1,3 @@
+#/bin/bash
+iverilog testbench.v docolor.v test.v
+vvp a.out
