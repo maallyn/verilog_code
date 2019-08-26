@@ -1,5 +1,10 @@
 `timescale 10ns / 10ps
 
+// This writes a byte to the LED strip. It uses a
+// modified SPI output from master to slave. We
+// are master and se send data. Nothing is required
+// to be received by the slave.
+
 module spi (
     input wire spi_clk,
     output reg spi_output_data = 0,
