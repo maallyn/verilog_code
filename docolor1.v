@@ -1,5 +1,13 @@
 `timescale 10ns / 10ps
 
+// Doled is the module that presents an entire tricolor LED module to the
+// strip. It hendles the master byte and the three color bytes.
+// It also will send the start byte for the strip (all zeroes), if the
+// type input variable is set to INPUT_TYPE_START value. It will send
+// the end string if the input type variable is set to INPUT_TYPE_END. If
+// that value is INPUT_TYPE_LED, it will send a properly formated tri
+// color LED data string to the strip.
+
 module doled (
 
 input wire[7:0] blue_input,
