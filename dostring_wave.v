@@ -1,3 +1,16 @@
+// This is the workhorse for creating the colorful sine waves.
+// It uses a crude pipeline of two buffers in attempt to reduce
+// waiting times.
+// This is also where I think I need the most help. I feel that I could
+// have implimended this by using RAM and not registers if I knew how.
+// There are three state machines.
+// One is to feed the doled module with individual tricolor LEDs
+// The second is to move the data from the working data array to the
+// current data array (which is the one that is output to the LED strip
+// The third state machine is the one that does the creating.
+// I anticipate that the third state machine is the one that I would add
+// features in the future such as accellerometer synchronization and other
+// graphics beyond simple multi color sine waves.
 
 module top (
   output wire led0,
@@ -132,6 +145,8 @@ assign led0 = one_cycle;
 assign led1 = mosi;
 assign led2 = dostring_clk;
 
+// This is the sine wave lookup table
+
 assign mysine[0] = 50;
 assign mysine[1] = 56;
 assign mysine[2] = 62;
@@ -182,6 +197,8 @@ assign mysine[46] = 43;
 
 assign go_ahead_with_move = go_ahead_move_from_working && go_ahead_move_to_current;
 
+// If I have to slow the main clock, I do it here
+
 always @ (posedge CLK)
   begin
   if (clk_count == 1)
@@ -195,6 +212,8 @@ always @ (posedge CLK)
     end  
   end
 
+// Instantiation of the doled module
+
 doled doled_1 (
 .blue_input(blue_out),
 .green_input(green_out),
@@ -206,6 +225,9 @@ doled doled_1 (
 .sck(sck),
 .doled_clk(dostring_clk)
 );
+
+// This is the state machine to take the current string and send it
+// to the doled module which sends the values to the strip via the spi module
 
 always @ (posedge dostring_clk)
   begin
@@ -361,6 +383,10 @@ always @ (posedge dostring_clk)
     endcase
   end
 
+// this is the state machine that copies the working string to the current string.
+// It needs to wait for the current string to be available for writing as well as
+// the working string to be available for reading.
+
 always @ (posedge dostring_clk)
   begin
     case(string_move_state)
@@ -445,6 +471,10 @@ always @ (posedge dostring_clk)
         end
       endcase
   end
+
+// This is the state machine that creates the multi colored sine waves on the
+// working string. This is the one where the art takes place and the one that
+// will be made more smart in the future.
 
 always @ (posedge dostring_clk)
   begin
