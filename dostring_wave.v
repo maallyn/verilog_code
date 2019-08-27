@@ -12,7 +12,7 @@
 // features in the future such as accellerometer synchronization and other
 // graphics beyond simple multi color sine waves.
 
-module top (
+module dostring_wave (
   output wire led0,
   output wire led1,
   output wire led2,

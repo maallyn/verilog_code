@@ -1,5 +1,3 @@
-`timescale 10ns / 10ps
-
 // Doled is the module that presents an entire tricolor LED module to the
 // strip. It hendles the master byte and the three color bytes.
 // It also will send the start byte for the strip (all zeroes), if the
