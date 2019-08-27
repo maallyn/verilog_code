@@ -4,7 +4,7 @@ module top (
   output wire led2,
   output wire mosi,
   output wire sck,
-  input wire Clk
+  input wire processed_clk
 );
 
 dostring_wave dostring_wave1 (
@@ -13,6 +13,6 @@ dostring_wave dostring_wave1 (
   .led2(led2),
   .mosi(mosi),
   .sck(sck),
-  .CLK(CLK)
+  .dostring_clk(processed_clk)
 );
 endmodule

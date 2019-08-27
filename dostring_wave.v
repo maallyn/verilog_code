@@ -18,7 +18,7 @@ module dostring_wave (
   output wire led2,
   output wire mosi,
   output wire sck,
-  input wire CLK
+  input wire dostring_clk
 );
 
 localparam
@@ -90,8 +90,6 @@ localparam MOVE_STRING_START = 0,
 localparam STRING_COLOR_DELAY = 5;
 
 wire[7:0] mysine[89:0];
-
-reg dostring_clk = 0;
 
 reg[7:0] count_devide_three = 0;
 reg[7:0] string_iteration_count = 0;
@@ -196,21 +194,6 @@ assign mysine[45] = 36;
 assign mysine[46] = 43;
 
 assign go_ahead_with_move = go_ahead_move_from_working && go_ahead_move_to_current;
-
-// If I have to slow the main clock, I do it here
-
-always @ (posedge CLK)
-  begin
-  if (clk_count == 1)
-    begin
-    clk_count <= 0;
-    dostring_clk <= ~dostring_clk;
-    end
-  else
-    begin
-    clk_count <= clk_count + 1;
-    end  
-  end
 
 // Instantiation of the doled module
 
