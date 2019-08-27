@@ -12,6 +12,7 @@ dostring_wave dostring_wave1 (
   .led1(led1),
   .led2(led2),
   .mosi(mosi),
-  .sci(sck),
+  .sck(sck),
   .CLK(CLK)
 );
+endmodule
