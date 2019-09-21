@@ -16,6 +16,7 @@ input wire doled_start,
 output reg doled_busy = 0,
 output wire mosi,
 output wire sck,
+input wire doled_reset,
 input wire doled_clk
 );
 
@@ -54,6 +55,7 @@ reg[4:0] led_state = LED_IDLE;
 reg spi_start = 0;
 
 spi spi1(
+  .spi_reset(doled_reset),
   .spi_clk(doled_clk),
   .spi_output_data(mosi),
   .spi_output_clock(sck),
@@ -62,206 +64,216 @@ spi spi1(
   .spi_busy(spi_busy)
   );
 
-always @ (posedge doled_clk)
+always @ (posedge doled_clk or posedge doled_reset)
   begin
-  case (led_state)
-    LED_IDLE:
-      begin
-      if (doled_start == 1)
+  if (doled_reset)
+    begin
+    led_state <= LED_IDLE;
+    doled_busy <= 0;
+    spi_start <= 0;
+    holding_buf <= 0;
+    end
+  else
+    begin
+    case (led_state)
+      LED_IDLE:
         begin
-        doled_busy <= 1;
-        led_state <= LED_START;
+        if (doled_start == 1)
+          begin
+          doled_busy <= 1;
+          led_state <= LED_START;
+          end
+        else
+          begin
+          doled_busy <= 0;
+          led_state <= LED_IDLE;
+          end
         end
-      else
+      LED_START:
         begin
-        doled_busy <= 0;
-        led_state <= LED_IDLE;
-        end
-      end
-    LED_START:
-      begin
-      case (type_input)
-        INPUT_TYPE_START:
-          begin
-          init_buf <= 0;
-          blue_buf <= 0;
-          green_buf <= 0;
-          red_buf <= 0;
-          end
-        INPUT_TYPE_LED:
-          begin
-          init_buf <= 8'b11111111;
-          blue_buf <= blue_input;
-          green_buf <= green_input;
-          red_buf <= red_input;
-          end
-        INPUT_TYPE_END:
-          begin
-          init_buf <= 8'b11111111;
-          blue_buf <= 8'b11111111;
-          green_buf <= 8'b11111111;
-          red_buf <= 8'b11111111;
-          end
-        default:
-          begin
-          init_buf <= 8'b11111111;
-          blue_buf <= 8'b11111111;
-          green_buf <= 8'b11111111;
-          red_buf <= 8'b11111111;
-          end
-        endcase
-      led_state <= LED_WAIT_INIT;
-      end
-    LED_WAIT_INIT:
-      begin
-      if (~spi_busy)
-        begin
-        led_state <= LED_LOAD_INIT;
-        end
-      else
-        begin
+        case (type_input)
+          INPUT_TYPE_START:
+            begin
+            init_buf <= 0;
+            blue_buf <= 0;
+            green_buf <= 0;
+            red_buf <= 0;
+            end
+          INPUT_TYPE_LED:
+            begin
+            init_buf <= 8'b11111111;
+            blue_buf <= blue_input;
+            green_buf <= green_input;
+            red_buf <= red_input;
+            end
+          INPUT_TYPE_END:
+            begin
+            init_buf <= 8'b11111111;
+            blue_buf <= 8'b11111111;
+            green_buf <= 8'b11111111;
+            red_buf <= 8'b11111111;
+            end
+          default:
+            begin
+            init_buf <= 8'b11111111;
+            blue_buf <= 8'b11111111;
+            green_buf <= 8'b11111111;
+            red_buf <= 8'b11111111;
+            end
+          endcase
         led_state <= LED_WAIT_INIT;
         end
-      end
-    LED_LOAD_INIT:
-      begin
-      holding_buf <= init_buf;
-      led_state <= LED_SEND_INIT;
-      end
-    LED_SEND_INIT:
-      begin
-      spi_start <= 1;
-      led_state <= LED_WAIT_SPI_BUSY_SEND_INIT;
-      end
-    LED_WAIT_SPI_BUSY_SEND_INIT:
-      begin
-      if (spi_busy == 1)
+      LED_WAIT_INIT:
         begin
-        spi_start <= 0;
-        led_state <= LED_WAIT_BLUE;
+        if (~spi_busy)
+          begin
+          led_state <= LED_LOAD_INIT;
+          end
+        else
+          begin
+          led_state <= LED_WAIT_INIT;
+          end
         end
-      else
+      LED_LOAD_INIT:
         begin
+        holding_buf <= init_buf;
+        led_state <= LED_SEND_INIT;
+        end
+      LED_SEND_INIT:
+        begin
+        spi_start <= 1;
         led_state <= LED_WAIT_SPI_BUSY_SEND_INIT;
         end
-      end
-    LED_WAIT_BLUE:
-      begin
-      if (~spi_busy)
+      LED_WAIT_SPI_BUSY_SEND_INIT:
         begin
-        led_state <= LED_LOAD_BLUE;
+        if (spi_busy == 1)
+          begin
+          spi_start <= 0;
+          led_state <= LED_WAIT_BLUE;
+          end
+        else
+          begin
+          led_state <= LED_WAIT_SPI_BUSY_SEND_INIT;
+          end
         end
-      else
+      LED_WAIT_BLUE:
         begin
-        led_state <= LED_WAIT_BLUE;
+        if (~spi_busy)
+          begin
+          led_state <= LED_LOAD_BLUE;
+          end
+        else
+          begin
+          led_state <= LED_WAIT_BLUE;
+          end
         end
-      end
-    LED_LOAD_BLUE:
-      begin
-      holding_buf <= blue_buf;
-      led_state <= LED_SEND_BLUE;
-      end
-    LED_SEND_BLUE:
-      begin
-      spi_start <= 1;
-      led_state <= LED_WAIT_SPI_BUSY_SEND_BLUE;
-      end
-    LED_WAIT_SPI_BUSY_SEND_BLUE:
-      begin
-      if (spi_busy == 1)
+      LED_LOAD_BLUE:
         begin
-        spi_start <= 0;
-        led_state <= LED_WAIT_GREEN;
+        holding_buf <= blue_buf;
+        led_state <= LED_SEND_BLUE;
         end
-      else
+      LED_SEND_BLUE:
         begin
+        spi_start <= 1;
         led_state <= LED_WAIT_SPI_BUSY_SEND_BLUE;
         end
-      end
-    LED_WAIT_GREEN:
-      begin
-      if (~spi_busy)
+      LED_WAIT_SPI_BUSY_SEND_BLUE:
         begin
-        led_state <= LED_LOAD_GREEN;
+        if (spi_busy == 1)
+          begin
+          spi_start <= 0;
+          led_state <= LED_WAIT_GREEN;
+          end
+        else
+          begin
+          led_state <= LED_WAIT_SPI_BUSY_SEND_BLUE;
+          end
         end
-      else
+      LED_WAIT_GREEN:
         begin
-        led_state <= LED_WAIT_GREEN;
+        if (~spi_busy)
+          begin
+          led_state <= LED_LOAD_GREEN;
+          end
+        else
+          begin
+          led_state <= LED_WAIT_GREEN;
+          end
         end
-      end
-    LED_LOAD_GREEN:
-      begin
-      holding_buf <= green_buf;
-      led_state <= LED_SEND_GREEN;
-      end
-    LED_SEND_GREEN:
-      begin
-      spi_start <= 1;
-      led_state <= LED_WAIT_SPI_BUSY_SEND_GREEN;
-      end
-    LED_WAIT_SPI_BUSY_SEND_GREEN:
-      begin
-      if (spi_busy == 1)
+      LED_LOAD_GREEN:
         begin
-        spi_start <= 0;
-        led_state <= LED_WAIT_RED;
+        holding_buf <= green_buf;
+        led_state <= LED_SEND_GREEN;
         end
-      else
+      LED_SEND_GREEN:
         begin
+        spi_start <= 1;
         led_state <= LED_WAIT_SPI_BUSY_SEND_GREEN;
         end
-      end
-    LED_WAIT_RED:
-      begin
-      if (~spi_busy)
+      LED_WAIT_SPI_BUSY_SEND_GREEN:
         begin
-        led_state <= LED_LOAD_RED;
+        if (spi_busy == 1)
+          begin
+          spi_start <= 0;
+          led_state <= LED_WAIT_RED;
+          end
+        else
+          begin
+          led_state <= LED_WAIT_SPI_BUSY_SEND_GREEN;
+          end
         end
-      else
+      LED_WAIT_RED:
         begin
-        led_state <= LED_WAIT_RED;
+        if (~spi_busy)
+          begin
+          led_state <= LED_LOAD_RED;
+          end
+        else
+          begin
+          led_state <= LED_WAIT_RED;
+          end
         end
-      end
-    LED_LOAD_RED:
-      begin
-      holding_buf <= red_buf;
-      led_state <= LED_SEND_RED;
-      end
-    LED_SEND_RED:
-      begin
-      spi_start <= 1;
-      led_state <= LED_WAIT_SPI_BUSY_SEND_RED;
-      end
-    LED_WAIT_SPI_BUSY_SEND_RED:
-      begin
-      if (spi_busy == 1)
+      LED_LOAD_RED:
         begin
-        spi_start <= 0;
-        led_state <= LED_WAIT_END;
+        holding_buf <= red_buf;
+        led_state <= LED_SEND_RED;
         end
-      else
+      LED_SEND_RED:
         begin
+        spi_start <= 1;
         led_state <= LED_WAIT_SPI_BUSY_SEND_RED;
         end
-      end
-    LED_WAIT_END:
-      begin
-      if (~spi_busy)
+      LED_WAIT_SPI_BUSY_SEND_RED:
         begin
-        doled_busy <= 0;
+        if (spi_busy == 1)
+          begin
+          spi_start <= 0;
+          led_state <= LED_WAIT_END;
+          end
+        else
+          begin
+          led_state <= LED_WAIT_SPI_BUSY_SEND_RED;
+          end
+        end
+      LED_WAIT_END:
+        begin
+        if (~spi_busy)
+          begin
+          doled_busy <= 0;
+          led_state <= LED_IDLE;
+          end
+        else
+          begin
+          led_state <= LED_WAIT_END;
+          end
+        end
+      default:
+        begin
         led_state <= LED_IDLE;
+        doled_busy <= 0;
         end
-      else
-        begin
-        led_state <= LED_WAIT_END;
-        end
-      end
-    default:
-      begin
-      led_state <= LED_IDLE;
-      doled_busy <= 0;
-      end
-    endcase
+      endcase
+    end
   end
 
 endmodule

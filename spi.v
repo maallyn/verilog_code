@@ -4,6 +4,7 @@
 // to be received by the slave.
 
 module spi (
+    input wire spi_reset,
     input wire spi_clk,
     output reg spi_output_data = 0,
     output reg spi_output_clock = 0,
@@ -30,95 +31,105 @@ reg[3:0] spi_state = STATE_IDLE;
 reg[7:0] spi_data_holding = 0;
 reg[3:0] clock_delay = 0;
 
-always @ (posedge spi_clk)
+always @ (posedge spi_clk or posedge spi_reset)
   begin
-  case(spi_state)
-    STATE_IDLE:
-      begin
-      if (spi_start == 1)
+  if (spi_reset)
+    begin
+    spi_state <= STATE_IDLE;
+    bit_counter <= 0;
+    clock_delay <= 0;
+    spi_data_holding <= 0;
+    end
+  else
+    begin
+    case(spi_state)
+      STATE_IDLE:
         begin
-        spi_busy <= 1;
-        spi_state <= STATE_ACCEPT;
+        if (spi_start == 1)
+          begin
+          spi_busy <= 1;
+          spi_state <= STATE_ACCEPT;
+          end
+        else
+          begin
+          spi_busy <= 0;
+          spi_state <= STATE_IDLE;
+          end
         end
-      else
+      STATE_ACCEPT:
         begin
-        spi_busy <= 0;
-        spi_state <= STATE_IDLE;
-        end
-      end
-    STATE_ACCEPT:
-      begin
-      spi_data_holding <= spi_data_in;
-      spi_state <= STATE_SET_BIT;
-      end
-    STATE_SET_BIT:
-      begin
-      spi_output_data <= spi_data_holding[7:7];
-      spi_state <= STATE_WAIT_CLOCK_SET;
-      clock_delay <= 0;
-      end
-    STATE_WAIT_CLOCK_SET:
-      begin
-      if (clock_delay < CLOCK_DELAY_TIME)
-        begin
-        clock_delay <= clock_delay + 1;
-        spi_state <= STATE_WAIT_CLOCK_SET;
-        end
-      else
-        begin
-        clock_delay <= 0;
-        spi_state <= STATE_SET_CLOCK;
-        end
-      end
-    STATE_SET_CLOCK:
-      begin
-      spi_output_clock <= 1;
-      spi_state <= STATE_WAIT_CLOCK_CLEAR;
-      end
-    STATE_WAIT_CLOCK_CLEAR:
-      begin
-      if (clock_delay < CLOCK_DELAY_TIME)
-        begin
-        clock_delay <= clock_delay + 1;
-        spi_state <= STATE_WAIT_CLOCK_CLEAR;
-        end
-      else
-        begin
-        clock_delay <= 0;
-        spi_state <= STATE_CLEAR_CLOCK;
-        end
-      end
-    STATE_CLEAR_CLOCK:
-      begin
-      spi_output_clock <= 0;
-      spi_state <= STATE_SHIFT_DATA_HOLDING;
-      end
-    STATE_SHIFT_DATA_HOLDING:
-      begin
-      if (bit_counter == 7)
-        begin
-        bit_counter <= 0;
-        spi_output_data <= 0;
-        spi_busy <= 0;
-        spi_state <= STATE_IDLE;
-        end
-      else
-        begin
-        bit_counter <= bit_counter + 1;
-        spi_data_holding <= spi_data_holding << 1;
+        spi_data_holding <= spi_data_in;
         spi_state <= STATE_SET_BIT;
         end
-      end
-    default:
-      begin
-      spi_output_data <= 0;
-      spi_output_clock <= 0;
-      spi_busy <= 0;
-      bit_counter <= 0;
-      spi_state <= STATE_IDLE;
-      spi_data_holding <= 0;
-      end
-    endcase
+      STATE_SET_BIT:
+        begin
+        spi_output_data <= spi_data_holding[7:7];
+        spi_state <= STATE_WAIT_CLOCK_SET;
+        clock_delay <= 0;
+        end
+      STATE_WAIT_CLOCK_SET:
+        begin
+        if (clock_delay < CLOCK_DELAY_TIME)
+          begin
+          clock_delay <= clock_delay + 1;
+          spi_state <= STATE_WAIT_CLOCK_SET;
+          end
+        else
+          begin
+          clock_delay <= 0;
+          spi_state <= STATE_SET_CLOCK;
+          end
+        end
+      STATE_SET_CLOCK:
+        begin
+        spi_output_clock <= 1;
+        spi_state <= STATE_WAIT_CLOCK_CLEAR;
+        end
+      STATE_WAIT_CLOCK_CLEAR:
+        begin
+        if (clock_delay < CLOCK_DELAY_TIME)
+          begin
+          clock_delay <= clock_delay + 1;
+          spi_state <= STATE_WAIT_CLOCK_CLEAR;
+          end
+        else
+          begin
+          clock_delay <= 0;
+          spi_state <= STATE_CLEAR_CLOCK;
+          end
+        end
+      STATE_CLEAR_CLOCK:
+        begin
+        spi_output_clock <= 0;
+        spi_state <= STATE_SHIFT_DATA_HOLDING;
+        end
+      STATE_SHIFT_DATA_HOLDING:
+        begin
+        if (bit_counter == 7)
+          begin
+          bit_counter <= 0;
+          spi_output_data <= 0;
+          spi_busy <= 0;
+          spi_state <= STATE_IDLE;
+          end
+        else
+          begin
+          bit_counter <= bit_counter + 1;
+          spi_data_holding <= spi_data_holding << 1;
+          spi_state <= STATE_SET_BIT;
+          end
+        end
+      default:
+        begin
+        spi_output_data <= 0;
+        spi_output_clock <= 0;
+        spi_busy <= 0;
+        bit_counter <= 0;
+        spi_state <= STATE_IDLE;
+        spi_data_holding <= 0;
+        end
+      endcase
+    end
   end
 
 endmodule

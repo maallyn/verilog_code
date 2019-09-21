@@ -26,6 +26,7 @@ dostring_wave dostring_wave1 (
   .led2(led2),
   .mosi(mosi),
   .sck(sck),
+  .dostring_reset(my_locked),
   .dostring_clk(clk_out1)
 );
 endmodule

@@ -17,6 +17,7 @@ module dostring_wave (
   output wire led2,
   output wire mosi,
   output wire sck,
+  input wire dostring_reset,
   input wire dostring_clk
 );
 
@@ -35,6 +36,7 @@ localparam CREATE_COLOR_TOP = 0,
 
 wire[7:0] mysine[89:0];
 
+reg[4:0] string_output_state = STRING_OUTPUT_IDLE;
 reg[7:0] string_iteration_count = 0;
 reg[7:0] create_string_count = 0;
 reg[7:0] blue_out = 0;
@@ -126,7 +128,17 @@ doled doled_1 (
 .doled_start(led_start),
 .mosi(mosi),
 .sck(sck),
+.doled_reset(dostring_reset),
 .doled_clk(dostring_clk)
 );
 
+always @ (posedge dostring_clk or posedge dostring_reset)
+  begin
+  if (dostring_reset)
+    begin
+    string_output_state <= OUTPUT_IDLE;
+    string_iteration_count <= 0;
+    string_count <= 0;
+    string_size <= 47/2;
+    end
 endmodule
