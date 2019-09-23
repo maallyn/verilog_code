@@ -1,0 +1,27 @@
+localparam
+  TOTAL_CYCLE_SIZE = 48,
+  COLOR_STATE_SIZE = 48/3;
+
+localparam
+  STRING_START = 0,
+  STRING_INSIDE = 1,
+  STRING_END = 2;
+
+localparam
+  STR_WAIT_FOR_LED = 0,
+  STR_CHECK_COLOR_STATE = 1,
+  STR_LOAD_COLORS = 2,
+  STR_SEND_COLORS = 3,
+  STR_ADVANCE_COUNTS = 4;
+
+localparam
+  COLOR_ON_ZERO = 0,
+  COLOR_ASCEND_SINE = 1,
+  COLOR_DESCEND_SINE = 2;
+
+reg[1:0] string_state;
+reg[2:0] led_send_state;
+reg[1:0] blue_sine_state;
+reg[1:0] green_sine_state;
+reg[1:0] red_sine_state; 
+  
