@@ -14,8 +14,8 @@ my $myrad;
 my $mysin;
 my $myintsin;
 
-for ($index1 = 0; $index1 < 48; $index1 += 1) {
-  $angle = (360/47) * $index1;
+for ($index1 = 0; $index1 < 60; $index1 += 1) {
+  $angle = (360/60) * ($index1 + 15);
   $angle = int($angle);
   $myrad = deg2rad($angle);
   $mysin = 1 + sin($myrad);
