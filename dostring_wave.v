@@ -137,9 +137,29 @@ always @ (posedge dostring_clk or posedge dostring_reset)
   begin
   if (dostring_reset)
     begin
+    color_stage_count <= 0;
+    string_state <= STRING_START;
+    led_send_state <= STR_WAIT_FOR_LED;
     string_output_state <= OUTPUT_IDLE;
+    blue_top_sine_state <= COLOR_DESCEND_SINE;
+    red_top_sine_state <= COLOR_ON_ZERO;
+    green_top_sine_state <= COLOR_ASCEND_SINE;
+    green_bottom_sine_state <= COLOR_DESCEND_SINE;
+    blue_bottom_sine_state <= COLOR_ON_ZERO;
+    red_bottom_sine_state <= COLOR_ASCEND_SINE;
+    string_color_state <= STRING_COLOR_TOP;
     string_iteration_count <= 0;
     string_count <= 0;
     string_size <= 47/2;
     end
+  else
+    begin
+    case (led_send_state)
+      STR_WAIT_FOR_LED:
+        begin
+        if (~doled_busy)
+          begin
+          led_send_state <= STR_CHECK_COLOR_STATE;
+          end
+        end
 endmodule

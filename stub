@@ -3,6 +3,11 @@ localparam
   COLOR_STATE_SIZE = 48/3;
 
 localparam
+  STRING_COLOR_TOP = 0,
+  STRING_COLOR_MIDDLE = 1,
+  STRING_COLOR_BOTTOM = 2;
+
+localparam
   STRING_START = 0,
   STRING_INSIDE = 1,
   STRING_END = 2;
@@ -19,9 +24,13 @@ localparam
   COLOR_ASCEND_SINE = 1,
   COLOR_DESCEND_SINE = 2;
 
+reg[7:0] color_stage_count;
 reg[1:0] string_state;
 reg[2:0] led_send_state;
-reg[1:0] blue_sine_state;
-reg[1:0] green_sine_state;
-reg[1:0] red_sine_state; 
-  
+reg[1:0] blue_top_sine_state;
+reg[1:0] green_top_sine_state;
+reg[1:0] red_top_sine_state; 
+reg[1:0] blue_bottom_sine_state;
+reg[1:0] green_bottom_sine_state;
+reg[1:0] red_bottom_sine_state;
+reg[1:0] string_color_state;
