@@ -1,8 +1,6 @@
 localparam
-  TOTAL_CYCLE_SIZE = 60,
-  COLOR_STATE_SIZE = 60/2,
   SINE_ASCEND_START_INDEX = 30,
-  SINE_DESCEND_START_INDEX = 0,
+  SINE_DESCEND_START_INDEX = 0;
 
 localparam
   STRING_COLOR_TOP = 0,
@@ -26,13 +24,26 @@ localparam
   COLOR_ASCEND_SINE = 1,
   COLOR_DESCEND_SINE = 2;
 
+// Where are we in the current stage 
 reg[7:0] color_stage_count;
+
+// Begin and end are special data; inside is normal tri color data
 reg[1:0] string_state;
+
+// LED SPI data rate is low, we need to wait, then load data, then start send
 reg[2:0] led_send_state;
+
+// Following three are for the sine wave color state for each respective
+// primary color for color above sine wave
 reg[1:0] blue_top_sine_state;
 reg[1:0] green_top_sine_state;
 reg[1:0] red_top_sine_state; 
+
+// Following three are for the sine wave color state for each respective
+// primary color for color below the sine wave
 reg[1:0] blue_bottom_sine_state;
 reg[1:0] green_bottom_sine_state;
 reg[1:0] red_bottom_sine_state;
+
+// Where are we? Above sine wave, on sine wave, below sine wave
 reg[1:0] string_color_state;

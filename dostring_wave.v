@@ -1,16 +1,15 @@
 // This is the workhorse for creating the colorful sine waves.
-// It uses a crude pipeline of two buffers in attempt to reduce
-// waiting times.
-// This is also where I think I need the most help. I feel that I could
-// have implimended this by using RAM and not registers if I knew how.
-// There are three state machines.
-// One is to feed the doled module with individual tricolor LEDs
-// The second is to move the data from the working data array to the
-// current data array (which is the one that is output to the LED strip
-// The third state machine is the one that does the creating.
-// I anticipate that the third state machine is the one that I would add
-// features in the future such as accellerometer synchronization and other
-// graphics beyond simple multi color sine waves.
+// I am attempting to do everything on the fly, which would
+// eliminate the need for multiple buffers.
+
+// Each iteration of the wand will be created on the fly using
+// an artistic sine wave approach. Colors will be based on sinasuidal
+// rotation of values of the primary colors. Each of red, green, and blue
+// will rotate based on ascend, then descend, then flat, then ascend and so on.
+
+// As wand moves by, you would see via persistance of vision a sine wave. Above
+// of sine wave would be one set of changing colors; sine wave itself would be
+// white. Then below the sine wave would be another set of changing colors.
 
 module dostring_wave (
   output wire led1,
@@ -21,10 +20,26 @@ module dostring_wave (
   input wire dostring_clk
 );
 
+// This is for the led output module. There are three data types:
+// First of string is a special start string data set,
+// Then each LED is a tri-color data set, then
+// End of string is a special data set.
 localparam
   INPUT_TYPE_START = 0,
   INPUT_TYPE_LED = 1,
   INPUT_TYPE_END = 2;
+
+// Total length of color sine wave
+localparam TOTAL_CYCLE_SIZE = 60,
+
+// How far is the lowest part of sine wave from beginning of wand
+SINE_WAVE_BASE = 10,
+
+// How much to devide the sine value to place location of sine wave on wand
+SINE_WAVE_DIVISION = 2,
+
+// Size of each of the color states (descend, flat, and ascend)
+COLOR_STATE_SIZE = TOTAL_CYCLE_SIZE/3;
 
 localparam STRING_SIZE = 47;
 localparam NUMBER_STRINGS = 47;
@@ -36,7 +51,6 @@ localparam CREATE_COLOR_TOP = 0,
 
 wire[7:0] mysine[TOTAL_CYCLE_SIZE-1:0];
 
-reg[4:0] string_output_state = STRING_OUTPUT_IDLE;
 reg[7:0] string_iteration_count = 0;
 reg[7:0] create_string_count = 0;
 reg[7:0] blue_out = 0;
@@ -152,7 +166,6 @@ always @ (posedge dostring_clk or posedge dostring_reset)
     color_stage_count <= 0;
     string_state <= STRING_START;
     led_send_state <= STR_WAIT_FOR_LED;
-    string_output_state <= OUTPUT_IDLE;
     blue_top_sine_state <= COLOR_DESCEND_SINE;
     red_top_sine_state <= COLOR_ON_ZERO;
     green_top_sine_state <= COLOR_ASCEND_SINE;
@@ -162,7 +175,7 @@ always @ (posedge dostring_clk or posedge dostring_reset)
     string_color_state <= STRING_COLOR_TOP;
     string_iteration_count <= 0;
     string_count <= 0;
-    string_size <= 47/2;
+    string_size <= 47;
     end
   else
     begin
