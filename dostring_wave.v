@@ -36,10 +36,12 @@ localparam TOTAL_CYCLE_SIZE = 60,
 SINE_WAVE_BASE = 10,
 
 // How much to devide the sine value to place location of sine wave on wand
-SINE_WAVE_DIVISION = 2,
+// This is done by shift right; devide by 2 is shift right of 1
+SINE_WAVE_DIVISION = 1,
 
 // Size of each of the color states (descend, flat, and ascend)
-COLOR_STATE_SIZE = TOTAL_CYCLE_SIZE/3;
+// This is TOTAL_CYCLE_SIZE / 3, which in this case is 20
+COLOR_STATE_SIZE = 20;
 
 localparam STRING_SIZE = 47;
 localparam NUMBER_STRINGS = 47;
