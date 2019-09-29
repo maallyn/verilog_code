@@ -20,6 +20,11 @@ module dostring_wave (
   input wire dostring_clk
 );
 
+
+// Start of insert of stub file
+// End of insert of stub file
+
+
 // This is for the led output module. There are three data types:
 // First of string is a special start string data set,
 // Then each LED is a tri-color data set, then
@@ -85,66 +90,66 @@ assign led2 = dostring_clk;
 
 // This is the sine wave lookup table
 
-assign sin[0] = 100;
-assign sin[1] = 99;
-assign sin[2] = 98;
-assign sin[3] = 97;
-assign sin[4] = 95;
-assign sin[5] = 93;
-assign sin[6] = 90;
-assign sin[7] = 87;
-assign sin[8] = 83;
-assign sin[9] = 79;
-assign sin[10] = 75;
-assign sin[11] = 70;
-assign sin[12] = 65;
-assign sin[13] = 60;
-assign sin[14] = 55;
-assign sin[15] = 50;
-assign sin[16] = 44;
-assign sin[17] = 39;
-assign sin[18] = 34;
-assign sin[19] = 29;
-assign sin[20] = 24;
-assign sin[21] = 20;
-assign sin[22] = 16;
-assign sin[23] = 12;
-assign sin[24] = 9;
-assign sin[25] = 6;
-assign sin[26] = 4;
-assign sin[27] = 2;
-assign sin[28] = 1;
-assign sin[29] = 0;
-assign sin[30] = 0;
-assign sin[31] = 0;
-assign sin[32] = 1;
-assign sin[33] = 2;
-assign sin[34] = 4;
-assign sin[35] = 6;
-assign sin[36] = 9;
-assign sin[37] = 12;
-assign sin[38] = 16;
-assign sin[39] = 20;
-assign sin[40] = 24;
-assign sin[41] = 29;
-assign sin[42] = 34;
-assign sin[43] = 39;
-assign sin[44] = 44;
-assign sin[45] = 50;
-assign sin[46] = 55;
-assign sin[47] = 60;
-assign sin[48] = 65;
-assign sin[49] = 70;
-assign sin[50] = 75;
-assign sin[51] = 79;
-assign sin[52] = 83;
-assign sin[53] = 87;
-assign sin[54] = 90;
-assign sin[55] = 93;
-assign sin[56] = 95;
-assign sin[57] = 97;
-assign sin[58] = 98;
-assign sin[59] = 99;
+assign mysine[0] = 100;
+assign mysine[1] = 99;
+assign mysine[2] = 98;
+assign mysine[3] = 97;
+assign mysine[4] = 95;
+assign mysine[5] = 93;
+assign mysine[6] = 90;
+assign mysine[7] = 87;
+assign mysine[8] = 83;
+assign mysine[9] = 79;
+assign mysine[10] = 75;
+assign mysine[11] = 70;
+assign mysine[12] = 65;
+assign mysine[13] = 60;
+assign mysine[14] = 55;
+assign mysine[15] = 50;
+assign mysine[16] = 44;
+assign mysine[17] = 39;
+assign mysine[18] = 34;
+assign mysine[19] = 29;
+assign mysine[20] = 24;
+assign mysine[21] = 20;
+assign mysine[22] = 16;
+assign mysine[23] = 12;
+assign mysine[24] = 9;
+assign mysine[25] = 6;
+assign mysine[26] = 4;
+assign mysine[27] = 2;
+assign mysine[28] = 1;
+assign mysine[29] = 0;
+assign mysine[30] = 0;
+assign mysine[31] = 0;
+assign mysine[32] = 1;
+assign mysine[33] = 2;
+assign mysine[34] = 4;
+assign mysine[35] = 6;
+assign mysine[36] = 9;
+assign mysine[37] = 12;
+assign mysine[38] = 16;
+assign mysine[39] = 20;
+assign mysine[40] = 24;
+assign mysine[41] = 29;
+assign mysine[42] = 34;
+assign mysine[43] = 39;
+assign mysine[44] = 44;
+assign mysine[45] = 50;
+assign mysine[46] = 55;
+assign mysine[47] = 60;
+assign mysine[48] = 65;
+assign mysine[49] = 70;
+assign mysine[50] = 75;
+assign mysine[51] = 79;
+assign mysine[52] = 83;
+assign mysine[53] = 87;
+assign mysine[54] = 90;
+assign mysine[55] = 93;
+assign mysine[56] = 95;
+assign mysine[57] = 97;
+assign mysine[58] = 98;
+assign mysine[59] = 99;
 
 // Instantiation of the doled module
 
@@ -176,8 +181,7 @@ always @ (posedge dostring_clk or posedge dostring_reset)
     red_bottom_sine_state <= COLOR_ASCEND_SINE;
     string_color_state <= STRING_COLOR_TOP;
     string_iteration_count <= 0;
-    string_count <= 0;
-    string_size <= 47;
+    create_string_count <= 0;
     end
   else
     begin
@@ -189,4 +193,7 @@ always @ (posedge dostring_clk or posedge dostring_reset)
           led_send_state <= STR_CHECK_COLOR_STATE;
           end
         end
+      endcase
+    end
+  end
 endmodule
