@@ -65,3 +65,5 @@ reg[1:0] red_bottom_sine_state;
 
 // Where are we? Above sine wave, on sine wave, below sine wave
 reg[1:0] string_color_state;
+
+

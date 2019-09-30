@@ -37,9 +37,6 @@ localparam
 // Total length of color sine wave
 localparam TOTAL_CYCLE_SIZE = 60,
 
-// How far is the lowest part of sine wave from beginning of wand
-SINE_WAVE_BASE = 10,
-
 // Size of each of the color states (descend, flat, and ascend)
 // This is TOTAL_CYCLE_SIZE / 2, which in this case is 30
 COLOR_STATE_SIZE = 30;
@@ -47,8 +44,8 @@ COLOR_STATE_SIZE = 30;
 
 localparam STRING_SIZE = 47;
 localparam NUMBER_STRINGS = 47;
-localparam WAND_SINE_SIZE = 40;
-localparam WAND_SINE_BASE = 3;
+localparam WAND_SINE_SIZE = 40; // Length of sine wave in iterations
+localparam WAND_SINE_BASE = 3; // Distance from bottome of sine wave to handle
 
 localparam MAX_COLOR_VALUE = 200;
 
@@ -60,32 +57,38 @@ wire[7:0] color_sin[TOTAL_CYCLE_SIZE-1:0];
 wire[7:0] wand_position_sin[WAND_SINE_SIZE-1:0];
 
 
+// What String are we on
 reg[7:0] string_iteration_count = 0;
+
+// Where in the string are we? This will repeat for each scan of the
+// wand. Zero is at the joint between the wand and the handle.
 reg[7:0] create_string_count = 0;
+
+// This is the counter for the sine wave on the wand.
+// It rotates from zero to WAND_SINE_SIZE. This is not the actual sine,
+// but it is the value for which the sine value is retrieved from the
+// wand_position_sine lookup table.
 reg[7:0] wand_sine_count = 0;
+
+// These three out values are the color elements that are fed to the
+// wand's SPI output driver module
 reg[7:0] blue_out = 0;
 reg[7:0] green_out = 0;
 reg[7:0] red_out = 0;
-reg[7:0] blue_working = 0;
-reg[7:0] green_working = 0;
-reg[7:0] red_working = 0;
+
+// The middle_point is the point on the wand at which the sine wave occurrs.
 reg[7:0] middle_point = 0;
 
-reg[7:0] top_blue;
-reg[7:0] top_green;
-reg[7:0] top_red;
-
-reg[7:0] middle_blue;
-reg[7:0] middle_green;
-reg[7:0] middle_red;
-
-reg[7:0] bottom_blue;
-reg[7:0] bottom_green;
-reg[7:0] bottom_red;
-
+// This register is connected to the wand's SPI driver module. It tells
+// the SPI driver to start sending the values to the wand.
 reg led_start = 0;
-reg one_cycle = 0;
+
+// This tells the wand SPI driver what type of data, start, end, or LED
 reg[1:0] input_type = INPUT_TYPE_START;
+
+// This comes from the wand SPI driver. It indicates that the SPI driver
+// is busy and that no data going to it should be changed, especially the
+// red, blue, or green out registers.
 wire doled_busy;
 
 assign led1 = mosi;
@@ -219,6 +222,8 @@ always @ (posedge dostring_clk or posedge dostring_reset)
   begin
   if (dostring_reset)
     begin
+    wand_sine_count <= 0;
+    middle_point <= wand_position_sin[0];
     color_stage_count <= 0;
     string_state <= STRING_START;
     led_send_state <= STR_WAIT_FOR_LED;
