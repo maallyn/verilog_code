@@ -27,7 +27,7 @@ localparam
   CLOCK_DELAY_TIME = 5;
   
 reg[2:0] bit_counter = 0;
-reg[3:0] spi_state = STATE_IDLE;
+reg[2:0] spi_state = STATE_IDLE;
 reg[7:0] spi_data_holding = 0;
 reg[3:0] clock_delay = 0;
 
@@ -36,6 +36,10 @@ always @ (posedge spi_clk or posedge spi_reset)
   if (spi_reset)
     begin
     spi_state <= STATE_IDLE;
+    spi_busy <= 0;
+    spi_output_data <= 0;
+    spi_output_clock <= 0;
+    spi_data_holding <= 0;
     bit_counter <= 0;
     clock_delay <= 0;
     spi_data_holding <= 0;

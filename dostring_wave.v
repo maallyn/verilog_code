@@ -292,6 +292,10 @@ always @ (posedge dostring_clk or posedge dostring_reset)
   begin
   if (dostring_reset)
     begin
+    input_type <= INPUT_TYPE_START;
+    blue_out <= 0;
+    red_out <= 0;
+    green_out <= 0;
     led_start <= 0;
     wand_sine_count <= 0;
     middle_point <= wand_position_sin[0];
@@ -305,7 +309,6 @@ always @ (posedge dostring_clk or posedge dostring_reset)
     blue_bottom_sine_state <= COLOR_ON_ZERO;
     red_bottom_sine_state <= COLOR_ASCEND_SINE;
     string_color_state <= STRING_COLOR_TOP;
-    string_iteration_count <= 0;
     create_string_count <= 0;
     end
   else

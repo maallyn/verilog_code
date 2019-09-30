@@ -72,6 +72,10 @@ always @ (posedge doled_clk or posedge doled_reset)
     doled_busy <= 0;
     spi_start <= 0;
     holding_buf <= 0;
+    init_buf <= 0;
+    blue_buf <= 0;
+    red_buf <= 0;
+    green_buf <= 0;
     end
   else
     begin
