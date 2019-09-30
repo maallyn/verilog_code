@@ -20,10 +20,75 @@ module dostring_wave (
   input wire dostring_clk
 );
 
+// Start point for ascend in sine wave and descend in sine wave
+localparam
+  SINE_ASCEND_START_INDEX = 30,
+  SINE_DESCEND_START_INDEX = 0;
 
-// Start of insert of stub file
-// End of insert of stub file
+// States for where we are on the wand; above, on, or below the sine wave
+localparam
+  STRING_COLOR_TOP = 0,
+  STRING_COLOR_MIDDLE = 1,
+  STRING_COLOR_BOTTOM = 2;
 
+// Each string needs special data at the beginning and the end, otherwise
+// data is tri-color data for each led in the string
+localparam
+  STRING_START = 0,
+  STRING_INSIDE = 1,
+  STRING_END = 2;
+
+// Overall state of string operation. We have to wait for the SPI data processing
+// out to the wand itself. This is slower than the main clock of 100 mhz. 
+// All operations are governed by this state table. This is the 'outer' state table
+// and all others are nested inside this one.
+localparam
+  STR_WAIT_FOR_LED = 0,
+  STR_LOAD_COLORS = 1,
+  STR_SEND_COLORS = 2,
+  STR_CHECK_COUNTERS = 3,
+  STR_CLEAR_START = 4,
+  STR_INCREMENT_WAND_COUNTERS = 5,
+  STR_SET_MIDPOINT_AND_COLORS = 6;
+
+// This is the state of each color in the sine wave. It can ascend via sine,
+// descend via sine, or stay at zero. For example, at the violet end of the 
+// rainbow, green is staying flat, blue is ascending, and red is descending;
+// blue in rainbow is red staying flat, blue at peak and staring to descend
+// and green is starting to ascend from staying flat at zero,
+// then we start to move into cyan with blue descending, red staying flat at zero,
+// and green ascending;
+// and so on throughout the rainbow until we get to red (red at full; green starts
+// flatline at zero, and blue starts to ascend while red starts to descend, which
+// means we are starting the rainbow at violet once again
+localparam
+  COLOR_ON_ZERO = 0,
+  COLOR_ASCEND_SINE = 1,
+  COLOR_DESCEND_SINE = 2;
+
+// Where are we in the current stage (each stage is 30 steps)
+reg[7:0] color_stage_count;
+
+// Begin and end are special data; inside is normal tri color data
+reg[1:0] string_state;
+
+// LED SPI data rate is low, we need to wait, then load data, then start send
+reg[2:0] led_send_state;
+
+// Following three are for the sine wave color state for each respective
+// primary color for color above sine wave
+reg[1:0] blue_top_sine_state;
+reg[1:0] green_top_sine_state;
+reg[1:0] red_top_sine_state; 
+
+// Following three are for the sine wave color state for each respective
+// primary color for color below the sine wave
+reg[1:0] blue_bottom_sine_state;
+reg[1:0] green_bottom_sine_state;
+reg[1:0] red_bottom_sine_state;
+
+// Where are we? Above sine wave, on sine wave, below sine wave
+reg[1:0] string_color_state;
 
 // This is for the led output module. There are three data types:
 // First of string is a special start string data set,
@@ -62,6 +127,11 @@ reg[7:0] string_iteration_count = 0;
 
 // Where in the string are we? This will repeat for each scan of the
 // wand. Zero is at the joint between the wand and the handle.
+// This is important because we need to send special data at the
+// start of the wand and at the end of the wand, while sending normal
+// led data for inside the wand
+// This value is also checked to determine whether we are above, on, or
+// below the sine wave on the wand
 reg[7:0] create_string_count = 0;
 
 // This is the counter for the sine wave on the wand.
@@ -222,6 +292,7 @@ always @ (posedge dostring_clk or posedge dostring_reset)
   begin
   if (dostring_reset)
     begin
+    led_start <= 0;
     wand_sine_count <= 0;
     middle_point <= wand_position_sin[0];
     color_stage_count <= 0;
@@ -251,8 +322,10 @@ always @ (posedge dostring_clk or posedge dostring_reset)
           led_send_state <= STR_LOAD_COLORS;
           end
         end
+
       STR_LOAD_COLORS:
         begin
+        // SPI is done with previous LED. We are now free to load the color values 
         // This is the 2nd level nesting of state machine. This state machine is driven
         // by whether we are at the start, end, or anywhere in the middle of the string
         // sent to the wand. Beginning and ending data sets are special. Those in between
@@ -266,6 +339,7 @@ always @ (posedge dostring_clk or posedge dostring_reset)
             green_out <= 0;
             red_out <= 0;
             end
+
           STRING_END:
             begin
             input_type <= INPUT_TYPE_END;
@@ -273,6 +347,7 @@ always @ (posedge dostring_clk or posedge dostring_reset)
             green_out <= 8'hff;
             red_out <= 8'hff; 
             end
+
           STRING_INSIDE:
             begin
             // This is the workhorse. Individual LED colors are set here
@@ -283,6 +358,9 @@ always @ (posedge dostring_clk or posedge dostring_reset)
             // On the sine wave is on the white sine wave
             // Below the sine wave is between the white sine wave and the free end of
             // the wand.
+            // Where we are in the overall color rainbow also determines what we send
+            // to the led. The color rainbow position is the same for the entire string;
+            // it changes only between strings.
             case (string_color_state)
               // Fourth level nesting state is color sine wave states to determine
               // individual red/green/blue intensity values for this particular LED
@@ -294,56 +372,72 @@ always @ (posedge dostring_clk or posedge dostring_reset)
                     begin
                     blue_out <= 0;
                     end
+
                   COLOR_ASCEND_SINE:
                     begin
                     blue_out <= color_sin[SINE_ASCEND_START_INDEX + color_stage_count];
                     end
+
                   COLOR_DESCEND_SINE:
                     begin
                     blue_out <= color_sin[SINE_DESCEND_START_INDEX + color_stage_count];
                     end
+
                   default:
                     begin
                     blue_out <= 0;
                     end
-                  endcase
+
+                  endcase // blue_top_sine_state
+
                 case (green_top_sine_state)
                   COLOR_ON_ZERO:
                     begin
                     green_out <= 0;
                     end
+
                   COLOR_ASCEND_SINE:
                     begin
                     green_out <= color_sin[SINE_ASCEND_START_INDEX + color_stage_count];
                     end
+
                   COLOR_DESCEND_SINE:
                     begin
                     green_out <= color_sin[SINE_DESCEND_START_INDEX + color_stage_count];
                     end
+
                   default:
                     begin
                     red_out <= 0;
                     end
-                  endcase
+
+                  endcase // green_top_sine_state
+
                 case (red_top_sine_state)
                   COLOR_ON_ZERO:
                     begin
                     red_out <= 0;
                     end
+
                   COLOR_ASCEND_SINE:
                     begin
                     red_out <= color_sin[SINE_ASCEND_START_INDEX + color_stage_count];
                     end
+
                   COLOR_DESCEND_SINE:
                     begin
                     red_out <= color_sin[SINE_DESCEND_START_INDEX + color_stage_count];
                     end
+
                   default:
                     begin
                     red_out <= 0;
                     end
-                  endcase
+
+                  endcase // red_top_sine_state
+
                 end
+
               STRING_COLOR_BOTTOM:
                 begin
                 case (blue_bottom_sine_state)
@@ -351,56 +445,72 @@ always @ (posedge dostring_clk or posedge dostring_reset)
                     begin
                     blue_out <= 0;
                     end
+
                   COLOR_ASCEND_SINE:
                     begin
                     blue_out <= color_sin[SINE_ASCEND_START_INDEX + color_stage_count];
                     end
+
                   COLOR_DESCEND_SINE:
                     begin
                     blue_out <= color_sin[SINE_DESCEND_START_INDEX + color_stage_count];
                     end
+
                   default:
                     begin
                     blue_out <= 0;
                     end
-                  endcase
+
+                  endcase // blue_bottom_sine_state
+
                 case (green_bottom_sine_state)
                   COLOR_ON_ZERO:
                     begin
                     green_out <= 0;
                     end
+
                   COLOR_ASCEND_SINE:
                     begin
                     green_out <= color_sin[SINE_ASCEND_START_INDEX + color_stage_count];
                     end
+
                   COLOR_DESCEND_SINE:
                     begin
                     green_out <= color_sin[SINE_DESCEND_START_INDEX + color_stage_count];
                     end
+
                   default:
                     begin
                     red_out <= 0;
                     end
-                  endcase
+
+                  endcase // blue_bottom_sine_state
+
                 case (red_bottom_sine_state)
                   COLOR_ON_ZERO:
                     begin
                     red_out <= 0;
                     end
+
                   COLOR_ASCEND_SINE:
                     begin
                     red_out <= color_sin[SINE_ASCEND_START_INDEX + color_stage_count];
                     end
+
                   COLOR_DESCEND_SINE:
                     begin
                     red_out <= color_sin[SINE_DESCEND_START_INDEX + color_stage_count];
                     end
+
                   default:
                     begin
                     red_out <= 0;
                     end
-                  endcase
+
+                  endcase // red_bottom_sine_statee
+
                 end
+
               STRING_COLOR_MIDDLE:
                 // On the sine wave, all is white
                 begin
@@ -408,14 +518,18 @@ always @ (posedge dostring_clk or posedge dostring_reset)
                 blue_out <= 150;
                 green_out <= 150;
                 end
+
               default:
                 begin
                 red_out <= 0;
                 blue_out <= 0;
                 green_out <= 0;
                 end
-              endcase
+
+              endcase // string_color_state
+
             end    
+
           default:
             begin
             input_type <= INPUT_TYPE_END;
@@ -423,10 +537,201 @@ always @ (posedge dostring_clk or posedge dostring_reset)
             green_out <= 8'hff;
             red_out <= 8'hff;
             end
-          endcase
-        end 
-            
-      endcase
+
+          endcase // led_send_state
+
+        led_send_state <= STR_LOAD_COLORS;
+        end // Done with loading the colors to the SPI
+
+      STR_SEND_COLORS:
+        begin
+        led_start <= 1; // Tell SPI to do it's thing
+        // While we are at it, we can increment the create_string_count.
+        // We do not increment the color_stage_count and wand_sine_count 
+        // because those two stay for the entire duration of the string;
+        // they are incremented and checked only at the end of the entire string
+        if (create_string_count <= STRING_SIZE)
+          begin
+          create_string_count <= 0;
+          end
+        else
+          begin
+          create_string_count <= create_string_count + 1;
+          end
+
+        // We will do checking and state machine adjustment at the next
+        // clock cycle
+        led_send_state <= STR_CHECK_COUNTERS;
+        end
+
+      STR_CHECK_COUNTERS:
+        begin
+        // First check the state of the string (begin, inside for LED, end)
+        if (create_string_count == 0)
+          begin
+          string_state <= STRING_START;
+          end
+        else if (create_string_count < STRING_SIZE)
+          begin
+          string_state <= STRING_INSIDE;
+          end
+        else
+          begin
+          string_state <= STRING_END;
+          end
+          
+        // Now check where we are in relation to the sine wave
+        if (create_string_count < (WAND_SINE_BASE + middle_point))
+          begin
+          string_color_state <= STRING_COLOR_TOP;
+          end
+        else if (create_string_count == (WAND_SINE_BASE + middle_point))
+          begin
+          string_color_state <= STRING_COLOR_MIDDLE;
+          end
+        else
+          begin
+          string_color_state <= STRING_COLOR_BOTTOM;
+          end
+        led_send_state <= STR_CLEAR_START;
+        end
+
+      STR_CLEAR_START:
+        // Now that we are two clock from starting the SPI, let's clear the
+        // led_start signal so that it won't repeat this LED when it is done
+        // with it
+        begin
+        led_start <= 0;
+        if (string_state == STRING_END)
+          // At end of string, rotate colors, and set the new middle point,
+          // otherwise wait for SPI to finish and then output the next LED
+          begin
+          led_send_state <= STR_INCREMENT_WAND_COUNTERS;
+          end
+        else
+          begin
+          led_send_state <= STR_WAIT_FOR_LED;
+          end
+        end
+
+      STR_INCREMENT_WAND_COUNTERS:
+        begin
+        if (wand_sine_count < WAND_SINE_SIZE)
+          begin
+          wand_sine_count <= wand_sine_count + 1;
+          end
+        else
+          begin
+          wand_sine_count <= 0;     
+          end
+        color_stage_count <= color_stage_count + 1;
+        led_send_state <= STR_SET_MIDPOINT_AND_COLORS;
+        end
+
+      STR_SET_MIDPOINT_AND_COLORS:
+        begin
+        // Do the easy one first; set midpoint
+        middle_point = wand_position_sin[wand_sine_count];
+
+        // Now the challenging part, update color sequence states if at
+        // the end of a color segment
+        if (color_stage_count >= COLOR_STATE_SIZE)
+          begin
+          // first, clear the counter
+          color_stage_count <= 0;
+
+          // do top states first
+
+          // blue
+          if (blue_top_sine_state == COLOR_ON_ZERO)
+            begin
+            blue_top_sine_state <= COLOR_ASCEND_SINE;
+            end
+          else if (blue_top_sine_state == COLOR_ASCEND_SINE)
+            begin
+            blue_top_sine_state <= COLOR_DESCEND_SINE;
+            end
+          else
+            begin
+            blue_top_sine_state <= COLOR_ON_ZERO;
+            end
+          
+          // green
+          if (green_top_sine_state == COLOR_ON_ZERO)
+            begin
+            green_top_sine_state <= COLOR_ASCEND_SINE;
+            end
+          else if (green_top_sine_state == COLOR_ASCEND_SINE)
+            begin
+            green_top_sine_state <= COLOR_DESCEND_SINE;
+            end
+          else
+            begin
+            green_top_sine_state <= COLOR_ON_ZERO;
+            end
+          
+          // red
+          if (red_top_sine_state == COLOR_ON_ZERO)
+            begin
+            red_top_sine_state <= COLOR_ASCEND_SINE;
+            end
+          else if (red_top_sine_state == COLOR_ASCEND_SINE)
+            begin
+            red_top_sine_state <= COLOR_DESCEND_SINE;
+            end
+          else
+            begin
+            red_top_sine_state <= COLOR_ON_ZERO;
+            end
+  
+          // Now do the bottom states (remember that middle is always white)
+
+          // blue
+          if (blue_bottom_sine_state == COLOR_ON_ZERO)
+            begin
+            blue_bottom_sine_state <= COLOR_ASCEND_SINE;
+            end
+          else if (blue_bottom_sine_state == COLOR_ASCEND_SINE)
+            begin
+            blue_bottom_sine_state <= COLOR_DESCEND_SINE;
+            end
+          else
+            begin
+            blue_bottom_sine_state <= COLOR_ON_ZERO;
+            end
+          
+          // green
+          if (green_bottom_sine_state == COLOR_ON_ZERO)
+            begin
+            green_bottom_sine_state <= COLOR_ASCEND_SINE;
+            end
+          else if (green_bottom_sine_state == COLOR_ASCEND_SINE)
+            begin
+            green_bottom_sine_state <= COLOR_DESCEND_SINE;
+            end
+          else
+            begin
+            green_bottom_sine_state <= COLOR_ON_ZERO;
+            end
+          
+          // red
+          if (red_bottom_sine_state == COLOR_ON_ZERO)
+            begin
+            red_bottom_sine_state <= COLOR_ASCEND_SINE;
+            end
+          else if (red_bottom_sine_state == COLOR_ASCEND_SINE)
+            begin
+            red_bottom_sine_state <= COLOR_DESCEND_SINE;
+            end
+          else
+            begin
+            red_bottom_sine_state <= COLOR_ON_ZERO;
+            end
+          end
+        led_send_state <= STR_WAIT_FOR_LED;
+        end  
+
+      endcase // led_send_state
     end
   end
 endmodule
