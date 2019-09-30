@@ -22,8 +22,8 @@ localparam
 // and all others are nested inside this one.
 localparam
   STR_WAIT_FOR_LED = 0,
-  STR_CHECK_COLOR_STATE = 1,
-  STR_LOAD_COLORS = 2,
+  STR_LOAD_COLORS = 1,
+  STR_ADVANCE_COUNTERS = 2,
   STR_SEND_COLORS = 3,
   STR_ADVANCE_COUNTS = 4;
 
