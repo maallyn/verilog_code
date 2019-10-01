@@ -8,18 +8,36 @@ module top (
   input wire my_reset
 );
 
-assign led0 = 0;
+assign led0 = my_reset;
 
-//main_clock my_main_clock
+reg[7:0] counter1 = 0;
+reg local_clock = 0;
+
+always @ (posedge CLK)
+  begin
+  if (counter1 > 3)
+    begin
+    local_clock <= ~local_clock;
+    counter1 <= 0;
+    end
+  else
+    begin
+    // local_clock <= ~local_clock; // Debugging
+    counter1 <= counter1 + 1;
+    end
+  end
+    
+
+//clk_wiz_0 my_main_clock
   //(
-  // Clock out ports  
+   //Clock out ports  
   //.clk_out1(clk_out1),
   // Status and control signals               
   //.reset(my_reset), 
   //.locked(my_locked),
  // Clock in ports
   //.clk_in1(CLK)
- // );
+ //);
 
 dostring_wave dostring_wave1 (
   .led1(led1),
@@ -27,6 +45,6 @@ dostring_wave dostring_wave1 (
   .mosi(mosi),
   .sck(sck),
   .dostring_reset(my_reset),
-  .dostring_clk(CLK)
+  .dostring_clk(local_clock)
 );
 endmodule

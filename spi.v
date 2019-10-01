@@ -24,12 +24,12 @@ localparam
   STATE_SHIFT_DATA_HOLDING = 7;
 
 localparam
-  CLOCK_DELAY_TIME = 5;
+  CLOCK_DELAY_TIME = 50;
   
 reg[2:0] bit_counter = 0;
 reg[2:0] spi_state = STATE_IDLE;
 reg[7:0] spi_data_holding = 0;
-reg[3:0] clock_delay = 0;
+reg[7:0] clock_delay = 0;
 
 always @ (posedge spi_clk or posedge spi_reset)
   begin
@@ -62,6 +62,11 @@ always @ (posedge spi_clk or posedge spi_reset)
         end
       STATE_ACCEPT:
         begin
+        // Following are for troubleshooting dostring_wave
+        //  bit_counter <= 0; //testing
+        //  spi_output_data <= 0; //testing
+        //  spi_busy <= 0; //testing
+        //  spi_state <= STATE_IDLE;//testing
         spi_data_holding <= spi_data_in;
         spi_state <= STATE_SET_BIT;
         end

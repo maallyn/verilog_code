@@ -1,3 +1,4 @@
+
 // This is the workhorse for creating the colorful sine waves.
 // I am attempting to do everything on the fly, which would
 // eliminate the need for multiple buffers.
@@ -162,7 +163,7 @@ reg[1:0] input_type = INPUT_TYPE_START;
 wire doled_busy;
 
 assign led1 = mosi;
-assign led2 = dostring_clk;
+assign led2 = sck;
 
 // This is the color sine wave lookup table
 // Range is from 0 to full led level of 200
@@ -540,10 +541,10 @@ always @ (posedge dostring_clk or posedge dostring_reset)
             green_out <= 8'hff;
             red_out <= 8'hff;
             end
+          
+          endcase // string_state
 
-          endcase // led_send_state
-
-        led_send_state <= STR_LOAD_COLORS;
+        led_send_state <= STR_SEND_COLORS;
         end // Done with loading the colors to the SPI
 
       STR_SEND_COLORS:
@@ -553,13 +554,13 @@ always @ (posedge dostring_clk or posedge dostring_reset)
         // We do not increment the color_stage_count and wand_sine_count 
         // because those two stay for the entire duration of the string;
         // they are incremented and checked only at the end of the entire string
-        if (create_string_count <= STRING_SIZE)
+        if (create_string_count < STRING_SIZE)
           begin
-          create_string_count <= 0;
+          create_string_count <= create_string_count + 1;
           end
         else
           begin
-          create_string_count <= create_string_count + 1;
+          create_string_count <= 0;
           end
 
         // We will do checking and state machine adjustment at the next

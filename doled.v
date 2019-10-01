@@ -86,6 +86,8 @@ always @ (posedge doled_clk or posedge doled_reset)
           begin
           doled_busy <= 1;
           led_state <= LED_START;
+          //led_state <= LED_IDLE; // debugging
+          //doled_busy <= 0; //debugging
           end
         else
           begin
