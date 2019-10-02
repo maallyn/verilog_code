@@ -6,8 +6,8 @@
 module spi (
     input wire spi_reset,
     input wire spi_clk,
-    output reg spi_output_data = 0,
-    output reg spi_output_clock = 0,
+    output reg spi_output_data,
+    output reg spi_output_clock,
     input wire spi_start,
     input wire[7:0] spi_data_in,
     output reg spi_busy = 0
@@ -24,14 +24,14 @@ localparam
   STATE_SHIFT_DATA_HOLDING = 7;
 
 localparam
-  CLOCK_DELAY_TIME = 50;
+  CLOCK_DELAY_TIME = 5;
   
 reg[2:0] bit_counter = 0;
 reg[2:0] spi_state = STATE_IDLE;
 reg[7:0] spi_data_holding = 0;
 reg[7:0] clock_delay = 0;
 
-always @ (posedge spi_clk or posedge spi_reset)
+always @ (posedge spi_clk)
   begin
   if (spi_reset)
     begin

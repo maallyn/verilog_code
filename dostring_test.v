@@ -31,10 +31,11 @@ localparam
   STR_SET_MIDPOINT_AND_COLORS = 6;
 
 assign led1 = sck;
-assign led2 = mosi;
+assign led2 = send_pulse;
 
 reg[2:0] led_send_state;
 reg[7:0] led_counter;
+reg[8:0] time_counter;
 
 localparam
   INPUT_TYPE_START = 0,
@@ -51,6 +52,7 @@ reg[7:0] green_out = 0;
 reg[7:0] red_out = 0;
 reg[1:0] input_type = 0;
 reg[1:0] string_out_state = 0;
+reg send_pulse = 0;
 
 // This register is connected to the wand's SPI driver module. It tells
 // the SPI driver to start sending the values to the wand.
@@ -60,9 +62,6 @@ reg led_start = 0;
 // is busy and that no data going to it should be changed, especially the
 // red, blue, or green out registers.
 wire doled_busy;
-
-assign led1 = mosi;
-assign led2 = sck;
 
 // Instantiation of the doled module
 
@@ -79,10 +78,11 @@ doled doled_1 (
 .doled_clk(dostring_clk)
 );
 
-always @ (posedge dostring_clk or posedge dostring_reset)
+always @ (posedge dostring_clk)
   begin
   if (dostring_reset)
     begin
+    time_counter <= 0;
     led_send_state <= 0;
     blue_out <= 0;
     green_out <= 0;
@@ -91,12 +91,14 @@ always @ (posedge dostring_clk or posedge dostring_reset)
     led_start <= 0;
     string_out_state <= 0;
     led_counter <= 0;
+    send_pulse <= 0;
     end
   else
     begin
     case (led_send_state)
       0:
         begin
+        send_pulse <= 0;
         if (~doled_busy)
           begin
           led_send_state <= 1;
@@ -104,6 +106,7 @@ always @ (posedge dostring_clk or posedge dostring_reset)
         end
       1:
         begin
+        time_counter <= 1;
         case (string_out_state)
           0:
             begin
@@ -166,9 +169,17 @@ always @ (posedge dostring_clk or posedge dostring_reset)
         led_send_state <= 2;
         end
       2:
-        begin
-        led_start <= 1;
-        led_send_state <= 3;
+        if (time_counter < 200)
+          begin
+          time_counter <= time_counter + 1;
+          led_send_state <= 2;
+          end
+        else
+          begin
+          time_counter <= 0;
+          send_pulse <= 1;
+          led_start <= 1;
+          led_send_state <= 3;
         end
       3:
         begin

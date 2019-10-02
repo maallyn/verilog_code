@@ -16,7 +16,7 @@ clk_wiz_0 my_main_clock
    //Clock out ports  
   .clk_out1(clk_out1),
   // Status and control signals               
-  .reset(my_reset), 
+  // .reset(my_reset), 
   .locked(my_locked),
  // Clock in ports
   .clk_in1(CLK)
@@ -27,7 +27,7 @@ dostring_wave dostring_wave1 (
   .led2(led2),
   .mosi(mosi),
   .sck(sck),
-  .dostring_reset(~my_locked),
+  .dostring_reset(my_reset),
   .dostring_clk(clk_out1)
 );
 endmodule

@@ -1,4 +1,4 @@
-`timescale 1ns / 1ns
+`timescale 10ns / 1ns
 
 module testbench;
   reg clk = 0;
@@ -31,9 +31,9 @@ initial begin
   end
 
 initial begin
- #10
- my_reset = 1;
  #20
+ my_reset = 1;
+ #30
  my_reset = 0;
  end
 
