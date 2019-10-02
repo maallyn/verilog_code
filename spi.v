@@ -24,12 +24,12 @@ localparam
   STATE_SHIFT_DATA_HOLDING = 7;
 
 localparam
-  CLOCK_DELAY_TIME = 5;
+  CLOCK_DELAY_TIME = 2000;
   
 reg[2:0] bit_counter = 0;
 reg[2:0] spi_state = STATE_IDLE;
 reg[7:0] spi_data_holding = 0;
-reg[7:0] clock_delay = 0;
+reg[15:0] clock_delay = 0;
 
 always @ (posedge spi_clk)
   begin
