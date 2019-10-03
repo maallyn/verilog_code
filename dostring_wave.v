@@ -365,6 +365,7 @@ always @ (posedge dostring_clk or posedge dostring_reset)
             // Where we are in the overall color rainbow also determines what we send
             // to the led. The color rainbow position is the same for the entire string;
             // it changes only between strings.
+            input_type <= INPUT_TYPE_LED;
             case (string_color_state)
               // Fourth level nesting state is color sine wave states to determine
               // individual red/green/blue intensity values for this particular LED
