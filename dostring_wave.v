@@ -586,18 +586,18 @@ always @ (posedge dostring_clk or posedge dostring_reset)
           end
           
         // Now check where we are in relation to the sine wave
-        if (create_string_count < (WAND_SINE_BASE + middle_point))
-          begin
-          string_color_state <= STRING_COLOR_TOP;
-          end
-        else if (create_string_count == (WAND_SINE_BASE + middle_point))
-          begin
-          string_color_state <= STRING_COLOR_MIDDLE;
-          end
-        else
-          begin
-          string_color_state <= STRING_COLOR_BOTTOM;
-          end
+        //if (create_string_count < (WAND_SINE_BASE + middle_point))
+          //begin
+          //string_color_state <= STRING_COLOR_TOP;
+//end
+        //else if (create_string_count == (WAND_SINE_BASE + middle_point))
+          //begin
+          //string_color_state <= STRING_COLOR_MIDDLE;
+          //end
+        //else
+          //begin
+          //string_color_state <= STRING_COLOR_BOTTOM;
+          //end
         led_send_state <= STR_CLEAR_START;
         end
 
