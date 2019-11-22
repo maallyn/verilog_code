@@ -71,6 +71,7 @@ localparam
   INPUT_TYPE_END = 2;
 
 localparam STRING_SIZE = 47;
+// localparam STRING_SIZE = 20; //DEBUG
 
 localparam
   COLOR_FULL_BRITE = 8'hf0,
@@ -124,34 +125,34 @@ assign green_seg[0] = COLOR_MIN_BRITE;
 assign red_seg[0] = COLOR_HALF_BRITE;
 
 // blue
-assign blue_seg[0] = COLOR_FULL_BRITE;
-assign green_seg[0] = COLOR_MIN_BRITE;
-assign red_seg[0] = COLOR_MIN_BRITE;
+assign blue_seg[1] = COLOR_FULL_BRITE;
+assign green_seg[1] = COLOR_MIN_BRITE;
+assign red_seg[1] = COLOR_MIN_BRITE;
 
 // cyan
-assign blue_seg[0] = COLOR_HALF_BRITE;
-assign green_seg[0] = COLOR_HALF_BRITE;
-assign red_seg[0] = COLOR_MIN_BRITE;
+assign blue_seg[2] = COLOR_HALF_BRITE;
+assign green_seg[2] = COLOR_HALF_BRITE;
+assign red_seg[2] = COLOR_MIN_BRITE;
 
 // green
-assign blue_seg[0] = COLOR_MIN_BRITE;
-assign green_seg[0] = COLOR_FULL_BRITE;
-assign red_seg[0] = COLOR_MIN_BRITE;
+assign blue_seg[3] = COLOR_MIN_BRITE;
+assign green_seg[3] = COLOR_FULL_BRITE;
+assign red_seg[3] = COLOR_MIN_BRITE;
 
 // yellow
-assign blue_seg[0] = COLOR_MIN_BRITE;
-assign green_seg[0] = COLOR_HALF_BRITE;
-assign red_seg[0] = COLOR_FULL_BRITE;
+assign blue_seg[4] = COLOR_MIN_BRITE;
+assign green_seg[4] = COLOR_HALF_BRITE;
+assign red_seg[4] = COLOR_FULL_BRITE;
 
 // orange
-assign blue_seg[0] = COLOR_MIN_BRITE;
-assign green_seg[0] = COLOR_QUARTER_BRITE;
-assign red_seg[0] = COLOR_THREE_QUARTER_BRITE;
+assign blue_seg[5] = COLOR_MIN_BRITE;
+assign green_seg[5] = COLOR_QUARTER_BRITE;
+assign red_seg[5] = COLOR_THREE_QUARTER_BRITE;
 
 // red
-assign blue_seg[0] = COLOR_MIN_BRITE;
-assign green_seg[0] = COLOR_MIN_BRITE;
-assign red_seg[0] = COLOR_FULL_BRITE;
+assign blue_seg[6] = COLOR_MIN_BRITE;
+assign green_seg[6] = COLOR_MIN_BRITE;
+assign red_seg[6] = COLOR_FULL_BRITE;
 
 // Instantiation of the doled module
 
@@ -299,7 +300,16 @@ always @ (posedge dostring_clk or posedge dostring_reset)
           begin
           string_state <= STRING_END;
           end
-          
+        
+        // Now bump up create_string_count now that we used it in this cycle
+        if (create_string_count < STRING_SIZE)
+          begin
+          create_string_count <= create_string_count + 1;
+          end
+        else
+          begin
+          create_string_count <= 0;
+          end  
         led_send_state <= STR_CLEAR_START;
         end
 

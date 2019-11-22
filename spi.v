@@ -24,7 +24,7 @@ localparam
   STATE_SHIFT_DATA_HOLDING = 7;
 
 localparam
-  CLOCK_DELAY_TIME = 70;
+  CLOCK_DELAY_TIME = 40;
   
 reg[2:0] bit_counter = 0;
 reg[2:0] spi_state = STATE_IDLE;
