@@ -79,7 +79,7 @@ localparam
   COLOR_HALF_BRITE = 8'h80,
   COLOR_MIN_BRITE = 9'h02,
   COLOR_THREE_QUARTER_BRITE = 8'hc0,
-  COLOR_SEGMENT_SIZE = 10,
+  COLOR_SEGMENT_SIZE = 15,
   COLOR_SEGMENT_NUMBER = 7;
 
 localparam MAX_COLOR_VALUE = 200;
@@ -281,7 +281,7 @@ always @ (posedge dostring_clk or posedge dostring_reset)
           if (color_segment_position >= COLOR_SEGMENT_SIZE)
             begin
             // Are we at the last segment? If so, go back to the start of the rainbow
-            if (color_segment_count >= COLOR_SEGMENT_NUMBER)
+            if (color_segment_count >= COLOR_SEGMENT_NUMBER-1)
               begin
               color_segment_count <= 0;
               end
